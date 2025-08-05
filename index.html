@@ -1,107 +1,156 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Live Quiz Scoreboard</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Scoreboard - Independence Day Quiz</title>
   <style>
-    body { font-family: Arial, sans-serif; background: #f7f7f7; padding: 20px; }
-    h1 { text-align: center; }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: #f4f6f8;
+    }
+
+    header {
+      background-color: #1e88e5;
+      color: white;
+      text-align: center;
+      padding: 20px;
+      font-size: 24px;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 30px auto;
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 20px;
-      background: white;
+      margin-top: 10px;
     }
+
     th, td {
-      padding: 10px;
-      text-align: center;
+      padding: 12px;
       border: 1px solid #ddd;
+      text-align: center;
     }
+
     th {
-      background-color: #3498db;
+      background: #1976d2;
       color: white;
     }
-    tr:nth-child(even) { background-color: #f2f2f2; }
-    .no-data { text-align: center; font-size: 18px; color: gray; margin-top: 50px; }
+
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+
+    .no-data {
+      text-align: center;
+      margin-top: 50px;
+      color: gray;
+    }
+
+    @media (max-width: 600px) {
+      table, thead, tbody, th, td, tr {
+        font-size: 14px;
+      }
+    }
   </style>
 </head>
 <body>
-  <h1>📊 Live Quiz Scoreboard</h1>
-  <div id="tableContainer">
-    <table id="scoreTable">
-      <thead>
-        <tr>
-          <th>Rank</th>
-          <th>Name</th>
-          <th>Score</th>
-          <th>Submitted At</th>
-        </tr>
-      </thead>
-      <tbody id="scoreBody">
-        <!-- Rows injected here -->
-      </tbody>
-    </table>
-  </div>
-  <div class="no-data" id="noData" style="display:none;">No submissions yet.</div>
 
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<header>🇮🇳 Independence Day Quiz - Kotpad NAC 🇮🇳</header>
 
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyD3HN5SCXq0dQ94wP73PHTJdwjNVAJOJm8",
-      authDomain: "livequizapp-5e433.firebaseapp.com",
-      databaseURL: "https://livequizapp-5e433-default-rtdb.firebaseio.com",
-      projectId: "livequizapp-5e433",
-      storageBucket: "livequizapp-5e433.firebasestorage.app",
-      messagingSenderId: "393541118458",
-      appId: "1:393541118458:web:76620000b8f08e87561c43"
-    };
+<div class="container">
+  <table>
+    <thead>
+      <tr>
+        <th>🏅 Rank</th>
+        <th>👤 Name</th>
+        <th>✅ Score</th>
+        <th>⏱️ Time Taken</th>
+      </tr>
+    </thead>
+    <tbody id="scoreBody">
+      <!-- Populated by JS -->
+    </tbody>
+  </table>
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+  <div class="no-data" id="noData" style="display:none;">No participants yet.</div>
+</div>
 
-    function fetchScores() {
-      db.ref("scores").on("value", snapshot => {
-        const scores = snapshot.val();
-        const tbody = document.getElementById("scoreBody");
-        const noData = document.getElementById("noData");
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 
-        tbody.innerHTML = "";
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyD3HN5SCXq0dQ94wP73PHTJdwjNVAJOJm8",
+    authDomain: "livequizapp-5e433.firebaseapp.com",
+    databaseURL: "https://livequizapp-5e433-default-rtdb.firebaseio.com",
+    projectId: "livequizapp-5e433",
+    storageBucket: "livequizapp-5e433.firebasestorage.app",
+    messagingSenderId: "393541118458",
+    appId: "1:393541118458:web:76620000b8f08e87561c43"
+  };
 
-        if (!scores) {
-          noData.style.display = "block";
-          return;
-        } else {
-          noData.style.display = "none";
-        }
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
 
-        // Convert object to array for sorting
-        const sorted = Object.entries(scores)
-          .map(([name, data]) => ({
+  function fetchScores() {
+    db.ref("scores").on("value", snapshot => {
+      const scores = snapshot.val();
+      const tbody = document.getElementById("scoreBody");
+      const noData = document.getElementById("noData");
+      tbody.innerHTML = "";
+
+      if (!scores) {
+        noData.style.display = "block";
+        return;
+      } else {
+        noData.style.display = "none";
+      }
+
+      const sorted = Object.entries(scores)
+        .map(([name, data]) => {
+          let timeTaken = data.timestamp && data.startedAt
+            ? (new Date(data.timestamp) - new Date(data.startedAt)) / 1000
+            : null;
+          return {
             name,
             score: data.score || 0,
-            time: data.timestamp || "9999-12-31T23:59:59"
-          }))
-          .sort((a, b) => {
-            if (b.score !== a.score) return b.score - a.score;
-            return new Date(a.time) - new Date(b.time);
-          });
-
-        sorted.forEach((user, index) => {
-          const row = document.createElement("tr");
-          row.innerHTML = `
-            <td>${index + 1}</td>
-            <td>${user.name}</td>
-            <td>${user.score}</td>
-            <td>${new Date(user.time).toLocaleString()}</td>
-          `;
-          tbody.appendChild(row);
+            timeTaken,
+          };
+        })
+        .sort((a, b) => {
+          if (b.score !== a.score) return b.score - a.score;
+          return (a.timeTaken || 9999) - (b.timeTaken || 9999);
         });
-      });
-    }
 
-    fetchScores();
-  </script>
+      sorted.forEach((entry, index) => {
+        const row = document.createElement("tr");
+        const formattedTime = entry.timeTaken != null
+          ? `${Math.floor(entry.timeTaken)} sec`
+          : "—";
+        row.innerHTML = `
+          <td>${index + 1}</td>
+          <td>${entry.name}</td>
+          <td>${entry.score}</td>
+          <td>${formattedTime}</td>
+        `;
+        tbody.appendChild(row);
+      });
+    });
+  }
+
+  fetchScores();
+</script>
 </body>
 </html>
