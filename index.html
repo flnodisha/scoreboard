@@ -1,58 +1,53 @@
 <!DOCTYPE html>
-<html type="module">
+<html>
 <head>
   <title>Live Quiz Scoreboard</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      background: #f5f5f5;
-    }
-    h1 {
-      text-align: center;
-      color: #333;
-    }
+    body { font-family: Arial, sans-serif; background: #f7f7f7; padding: 20px; }
+    h1 { text-align: center; }
     table {
       width: 100%;
-      max-width: 500px;
-      margin: 20px auto;
       border-collapse: collapse;
-      background-color: white;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      margin-top: 20px;
+      background: white;
     }
     th, td {
-      padding: 12px;
-      border-bottom: 1px solid #ddd;
-      text-align: left;
+      padding: 10px;
+      text-align: center;
+      border: 1px solid #ddd;
     }
     th {
-      background-color: #ff69b4;
+      background-color: #3498db;
       color: white;
     }
-    tr:nth-child(even) {
-      background-color: #f9f9f9;
-    }
+    tr:nth-child(even) { background-color: #f2f2f2; }
+    .no-data { text-align: center; font-size: 18px; color: gray; margin-top: 50px; }
   </style>
 </head>
 <body>
+  <h1>📊 Live Quiz Scoreboard</h1>
+  <div id="tableContainer">
+    <table id="scoreTable">
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>Name</th>
+          <th>Score</th>
+          <th>Submitted At</th>
+        </tr>
+      </thead>
+      <tbody id="scoreBody">
+        <!-- Rows injected here -->
+      </tbody>
+    </table>
+  </div>
+  <div class="no-data" id="noData" style="display:none;">No submissions yet.</div>
 
-  <h1>🏆 Live Quiz Scoreboard</h1>
-  <table>
-    <thead>
-      <tr>
-        <th>Rank</th>
-        <th>User</th>
-        <th>Score</th>
-      </tr>
-    </thead>
-    <tbody id="scoreTableBody"></tbody>
-  </table>
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 
-  <!-- Firebase -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-
+  <script>
     const firebaseConfig = {
       apiKey: "AIzaSyD3HN5SCXq0dQ94wP73PHTJdwjNVAJOJm8",
       authDomain: "livequizapp-5e433.firebaseapp.com",
@@ -63,30 +58,50 @@
       appId: "1:393541118458:web:76620000b8f08e87561c43"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-    const scoreRef = ref(db, "scores");
+    function fetchScores() {
+      db.ref("scores").on("value", snapshot => {
+        const scores = snapshot.val();
+        const tbody = document.getElementById("scoreBody");
+        const noData = document.getElementById("noData");
 
-    onValue(scoreRef, (snapshot) => {
-      const scores = snapshot.val() || {};
-      const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+        tbody.innerHTML = "";
 
-      const tableBody = document.getElementById("scoreTableBody");
-      tableBody.innerHTML = "";
+        if (!scores) {
+          noData.style.display = "block";
+          return;
+        } else {
+          noData.style.display = "none";
+        }
 
-      sorted.forEach(([name, score], index) => {
-        const row = `
-          <tr>
+        // Convert object to array for sorting
+        const sorted = Object.entries(scores)
+          .map(([name, data]) => ({
+            name,
+            score: data.score || 0,
+            time: data.timestamp || "9999-12-31T23:59:59"
+          }))
+          .sort((a, b) => {
+            if (b.score !== a.score) return b.score - a.score;
+            return new Date(a.time) - new Date(b.time);
+          });
+
+        sorted.forEach((user, index) => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
             <td>${index + 1}</td>
-            <td>${name}</td>
-            <td>${score}</td>
-          </tr>
-        `;
-        tableBody.innerHTML += row;
+            <td>${user.name}</td>
+            <td>${user.score}</td>
+            <td>${new Date(user.time).toLocaleString()}</td>
+          `;
+          tbody.appendChild(row);
+        });
       });
-    });
-  </script>
+    }
 
+    fetchScores();
+  </script>
 </body>
 </html>
