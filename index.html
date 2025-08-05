@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html type="module">
+<head>
+  <title>Live Quiz Scoreboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    table {
+      width: 100%;
+      max-width: 500px;
+      margin: 20px auto;
+      border-collapse: collapse;
+      background-color: white;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    th, td {
+      padding: 12px;
+      border-bottom: 1px solid #ddd;
+      text-align: left;
+    }
+    th {
+      background-color: #ff69b4;
+      color: white;
+    }
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🏆 Live Quiz Scoreboard</h1>
+  <table>
+    <thead>
+      <tr>
+        <th>Rank</th>
+        <th>User</th>
+        <th>Score</th>
+      </tr>
+    </thead>
+    <tbody id="scoreTableBody"></tbody>
+  </table>
+
+  <!-- Firebase -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyD3HN5SCXq0dQ94wP73PHTJdwjNVAJOJm8",
+      authDomain: "livequizapp-5e433.firebaseapp.com",
+      databaseURL: "https://livequizapp-5e433-default-rtdb.firebaseio.com",
+      projectId: "livequizapp-5e433",
+      storageBucket: "livequizapp-5e433.firebasestorage.app",
+      messagingSenderId: "393541118458",
+      appId: "1:393541118458:web:76620000b8f08e87561c43"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const scoreRef = ref(db, "scores");
+
+    onValue(scoreRef, (snapshot) => {
+      const scores = snapshot.val() || {};
+      const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+
+      const tableBody = document.getElementById("scoreTableBody");
+      tableBody.innerHTML = "";
+
+      sorted.forEach(([name, score], index) => {
+        const row = `
+          <tr>
+            <td>${index + 1}</td>
+            <td>${name}</td>
+            <td>${score}</td>
+          </tr>
+        `;
+        tableBody.innerHTML += row;
+      });
+    });
+  </script>
+
+</body>
+</html>
